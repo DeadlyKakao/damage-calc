@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-''' Instructions '''
+''' Instructions/Explanations '''
 
 import numpy as np
 
 import inputWeapons as iw
-import Sheet as sht
+import sheet as sht
 
 
 # Optionen für Numpy zur Textausgabe von Arrays

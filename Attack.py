@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import Weapon as wp
+import weapon as wp
 
 class Attack:
     '''Ein Objekt der Klasse Attack enthält eine oder mehrere Waffen als
