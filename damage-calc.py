@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
-''' Instructions/Explanations '''
+''' Instructions/Explanations/Versions
+
+
+
+
+'''
 
 import numpy as np
 
