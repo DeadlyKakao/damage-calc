@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 
+"""
+attack.py provides the Attack class for attack representation.
+An attack consists of one or several weapons.
+
+*** Recent Changes: ***
+XXXX-XX-XX: Translated comments to English
+"""
+
 import numpy as np
 import weapon as wp
 

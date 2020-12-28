@@ -1,21 +1,33 @@
 # -*- coding: utf-8 -*-
 
+"""
+weapon.py provides the Weapon class for weapon representation.
+
+*** Recent Changes: ***
+2020-12-28: Translated comments to English
+"""
+
 import numpy as np
 import pandas as pd
 
 class Weapon :
-    '''Diese Klasse beinhaltet eine einzelne hergestellte oder natürliche
-    Waffe. Mehrere Waffen können im Rahmen einer Attack zusammengestellt werden.
-    Sofern mit einer Waffe im Rahmen eines vollen Angriffs mehrere Angriffe
-    möglich sind, ist dies im baseAttacks-Vektor mit den zugehörigen Mail
-    festgehalten.'''
+    """
+    The Weapon class represents a single manufactured or natural weapon.
+    Several weapons can be assembled in the form of an Attack object.
+    """
     
     def __init__(self, dfWeapon, minAC, maxAC):
-        '''Diese Funktion nimmt den übergebenen dfWeapon-DataFrame auseinander
-        und sortiert den Inhalt in dafür vorgesehene Variablen ein.'''
+        """
+        The constructor of the Weapon class takes a Pandas.DataFrame with all
+        important weapon data and sorts it into object variables.
         
-        self.name = dfWeapon.iloc[0,0]                                          # Name des Angriffs (hilfreich zur Unterscheidung später)
-        self.baseDice = self.diceLineConversion(dfWeapon.iloc[1,:].values)      # Grund-Waffenschadenswürfel
+        dfWeapon: DataFrame containing weapon properties
+        minAC:    Minimum target AC for hit chance calculations
+        maxAC:    Maximum target AC for hit chance calculations
+        """
+        
+        self.name = dfWeapon.iloc[0,0]                                          # Weapon name: Useful for distinction in the later results
+        self.baseDice = self.diceLineConversion(dfWeapon.iloc[1,:].values)      # Base Weapon Damage Dice
         
         # Die Grundangriffszeile enthält so viele Einträge, wie es Angriffe im
         # Fall eines vollen Angriffs gibt, mit den dazugehörigen GAB-Mali.
@@ -26,22 +38,22 @@ class Weapon :
         for i in baseAttacksLine[~pd.isnull(baseAttacksLine)]:
             self.baseAttacks.append(int(i))
         
-        self.attackBonus = int(dfWeapon.iloc[3,0])                              # Gesamter Angriffsbonus (GAB eingerechnet)
-        self.damageBonus = int(dfWeapon.iloc[4,0])                              # Schadensbonus
-        self.critRange = int(dfWeapon.iloc[5,0])                                # min. Würfelergebnis, bei dem eine kritische Bedrohung erzielt werden kann.
-        self.critMultiplier = int(dfWeapon.iloc[6,0])                           # Kritischer Schadensmultiplikator
-        self.critConfirmBonus = int(dfWeapon.iloc[7,0])                         # Gesonderter Angriffsbonus auf Bestätigungswürfe
-        self.precisionDice = self.diceLineConversion(dfWeapon.iloc[8,:].values) # Präzisionsschadenswürfel (bspw. Hinterhältiger Angriff)
-        self.precisionDamage = int(dfWeapon.iloc[9,0])                          # Präzisionsschadensbonus
-        self.extraDice = self.diceLineConversion(dfWeapon.iloc[10,:].values)    # Zusatzschadenswürfel (bspw. Aufflammen)
-        self.extraCritDice = self.diceLineConversion(dfWeapon.iloc[11,:].values)# Zusätzliche kritische Schadenswürfel (bspw. Flammeninferno)
-        self.extraDamage = int(dfWeapon.iloc[12,0])                             # Zusatzschaden, der bei kritischem Treffer nicht mitmultipliziert wird
-        self.extraCritDamage = int(dfWeapon.iloc[13,0])                         # Zusatzschaden, der nur bei kritischem Treffer berücksichtigt wird.
-        self.fortification = dfWeapon.iloc[14,0]*1e-2                           # Bollwerk -> Fehlschlagchance kritischer Treffer
-        self.precImmunity = dfWeapon.iloc[15,0]                                 # Immunität gegen Präzisionsschaden? (0: nein, 1: ja)
-        self.failChance = dfWeapon.iloc[16,0]*1e-2                              # Fehlschlagchance aufgrund von Tarnung etc., gilt auch für Bestätigungswürfe
-        self.damageReduction = int(dfWeapon.iloc[17,0])                         # Schadensreduzierung
-        self.acRange = [minAC, maxAC]                                           # RK-Bereich, der für die Rechnung berücksichtigt werden soll
+        self.attackBonus = int(dfWeapon.iloc[3,0])                              # Overall Attack Bonus (BAB factored in)
+        self.damageBonus = int(dfWeapon.iloc[4,0])                              # Overall Damage Bonus
+        self.critRange = int(dfWeapon.iloc[5,0])                                # Critical Threat Range (minimum result of d20 which can threaten a critical hit)
+        self.critMultiplier = int(dfWeapon.iloc[6,0])                           # Critical Damage Multiplier
+        self.critConfirmBonus = int(dfWeapon.iloc[7,0])                         # Separate Attack Bonus for Critical Confirmation Rolls
+        self.precisionDice = self.diceLineConversion(dfWeapon.iloc[8,:].values) # Precision Damage Dice (e.g. Sneak Attack)
+        self.precisionDamage = int(dfWeapon.iloc[9,0])                          # Precision Damage Bonus
+        self.extraDice = self.diceLineConversion(dfWeapon.iloc[10,:].values)    # Additional Damage Dice (e.g. Flaming)
+        self.extraCritDice = self.diceLineConversion(dfWeapon.iloc[11,:].values)# Additional Critical Damage Dice (e.g. Flaming Burst)
+        self.extraDamage = int(dfWeapon.iloc[12,0])                             # Additional Damage that is not multiplied on a critical hit
+        self.extraCritDamage = int(dfWeapon.iloc[13,0])                         # Additional Damage that only comes in on a critical hit (not multiplied by Critical Damage Multiplier)
+        self.fortification = dfWeapon.iloc[14,0]*1e-2                           # Fortification -> Chance for critical hits or precision damage to be nullified.
+        self.precImmunity = dfWeapon.iloc[15,0]                                 # Immunity versus Precision Damage (0: not immune, 1: immune)
+        self.failChance = dfWeapon.iloc[16,0]*1e-2                              # Failure chance due to concealment or similar effects. Also affects confirmation rolls
+        self.damageReduction = int(dfWeapon.iloc[17,0])                         # Target Damage Reduction
+        self.acRange = [minAC, maxAC]                                           # AC range to consider for damage calculations
         self.acArray = np.arange(self.acRange[0], self.acRange[1]+1)
         
         # Berechnung der gesamten Schadensboni für normale und kritische Treffer

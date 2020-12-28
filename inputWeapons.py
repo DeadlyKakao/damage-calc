@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+"""
+weapon.py provides the Weapon class for weapon representation.
+
+*** Recent Changes: ***
+XXXX-XX-XX: Translated comments to English
+"""
+
 import pandas as pd
 
 def readInput(fileName, sheet):
