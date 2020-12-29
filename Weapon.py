@@ -26,7 +26,8 @@ class Weapon :
         Parameters
         ----------
         dfWeapon : pandas.DataFrame
-            DataFrame which contains every weapon property from the input file.
+            DataFrame which contains every weapon property from the input file
+            for this single weapon.
         minAC :    int
             Lower limit of target AC for calculations.
         maxAC :    int
@@ -34,7 +35,8 @@ class Weapon :
 
         Returns
         -------
-        self : Weapon
+        None.
+        
         """
         
         self.name = dfWeapon.iloc[0,0]                                          # Weapon name: Useful for distinction in the later results
@@ -49,8 +51,8 @@ class Weapon :
         at full BAB. Penalties from two-weapon fighting should also be
         considered in baseAttacks
         If the wielder adds an off-hand weapon with the TWF and ITWF feats,
-        baseAttacks becomes [-2, -2, -7], while the off-hand weapon (which is
-        a separate Weapon object) gets [-2, -7]
+        baseAttacks becomes [-2, -2, -7], while the (light) off-hand weapon
+        (which is a separate Weapon object) gets [-2, -7].
         """
         baseAttacksLine = dfWeapon.iloc[2,:].values
         self.baseAttacks = []
@@ -113,6 +115,7 @@ class Weapon :
             List of 2-tuples which describe the dice number and types given
             in a single line of the input file, in the form of
             a1db1, a2db2 -> [(a1,b1), (a2,b2)].
+        
         """
         
         # Remove NaN entries in the passed line
@@ -142,7 +145,8 @@ class Weapon :
         -------
         sorted(diceList) : list
             List of dice from a given dice tuple list n the form of
-            [x, ..., x, y, ..., y, ...], sorted ascending by dice type.
+            [x, ..., x, y, ..., y, ...], sorted ascending by dice type
+        
         """
         
         diceList = []
@@ -154,10 +158,6 @@ class Weapon :
     def listData(self):
         """
         Output function that prints weapon properties to the console.
-
-        Parameters
-        ----------
-        None
 
         Returns
         -------
@@ -206,15 +206,12 @@ class Weapon :
         be rolled on a normal hit.
         Example: 1d4 + 2d6 + 1d12 becomes [4, 6, 6, 12]
 
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         sorted(diceList) : list
             List of damage dice for a normal hit in the form of
             [x, ..., x, y, ..., y, ...], sorted ascending by dice type.
+        
         """
         
         diceList = []
@@ -234,15 +231,12 @@ class Weapon :
         """
         As listDiceHit(), but for critical hits
 
-        Parameters
-        ----------
-        None.
-
         Returns
         -------
         sorted(diceList) : list
             List of damage dice for a critical hit in the form of
             [x, ..., x, y, ..., y, ...], sorted ascending by dice type.
+        
         """
         
         diceList = []
@@ -277,6 +271,7 @@ class Weapon :
         diceGroup : list
             List containing a list for every dice type in the form of [x, y]
             corresponding to xdy.
+        
         """
         
         # The input list is assumed to be sorted because every function that
@@ -299,14 +294,11 @@ class Weapon :
         Outputs a short string with full attack bonuses and damage expression
         for a normal hit.
 
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         s : str
             Short weapon rolls description with normal damage.
+        
         """
         
         s = ""
@@ -319,21 +311,18 @@ class Weapon :
             s += str(l[0]) + "d" + str(l[1]) + " + "
         s = s[:-3]
         damage = self.damageHit
-        s += "+" + str(damage)
+        s += " + " + str(damage)
         return s
     
     def weaponStringCrit(self):
         """
         As weaponStringHit(), but for critical hits.
 
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         s : str
             Short weapon rolls description with critical damage.
+        
         """
         
         s = ""
@@ -348,7 +337,7 @@ class Weapon :
             s += str(l[0]) + "d" + str(l[1]) + " + "
         s = s[:-3]
         damage = self.damageCrit
-        s += "+" + str(damage)
+        s += " + " + str(damage)
         
         return s
     
@@ -367,14 +356,11 @@ class Weapon :
         reduce damage dealt to zero, otherwise the creation of a dice array is
         not necessary.
 
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         avgDamage : float
             Average damage per normal hit.
+        
         """
         
         # Get dice list for normal hits
@@ -409,16 +395,13 @@ class Weapon :
         
     def calcDamageCrit(self):
         """
-        As calcDamageHit(), but for critical hits
-
-        Parameters
-        ----------
-        None
+        As calcDamageHit(), but for critical hits.
 
         Returns
         -------
         avgDamage : float
             Average damage per critical hit.
+        
         """
         
         # Get dice list for critical hits
@@ -451,7 +434,7 @@ class Weapon :
     def calcDamageFromDice(self, diceList):
         """
         This function calculates the average dice roll according to this formula:
-        avg(xdy) = x * (y+1)/2
+        avg(xdy) = x * (y+1)/2.
 
         Parameters
         ----------
@@ -462,6 +445,7 @@ class Weapon :
         -------
         damage : float
             Average roll of given dice list.
+        
         """
         
         damage = 0
@@ -491,8 +475,9 @@ class Weapon :
 
         Returns
         -------
-        diceArray : ndarray
+        diceArray : np.array
             Array filled with the sum of every possible dice roll combination.
+        
         """
         
         diceArray = np.zeros(tuple(diceList), dtype=int)
@@ -525,6 +510,7 @@ class Weapon :
         -------
         result : np.array
             Hit chance for every AC in the given AC range.
+        
         """
         
         result = np.zeros(self.acArray.size,)
@@ -553,6 +539,7 @@ class Weapon :
         -------
         result : np.array
             Critical hit chance for every AC in the given AC range.
+        
         """
         
         result = np.zeros(self.acArray.size,)
@@ -586,16 +573,13 @@ class Weapon :
         element in self.baseAttacks, while the first columns contains the sum
         of every row.
 
-        Parameters
-        ----------
-        None
-
         Returns
         -------
         attackResults : np.array
             Average damage of weapon, corresponding to target AC.
 
         """
+        
         attackResults = np.zeros((self.acArray.size, len(self.baseAttacks)+1))
         
         for b in range(len(self.baseAttacks)):

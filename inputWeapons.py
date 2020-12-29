@@ -1,54 +1,65 @@
 # -*- coding: utf-8 -*-
 
 """
-weapon.py provides the Weapon class for weapon representation.
+inputWeapons.py provides the input functions for damage-calc.
 
 *** Recent Changes: ***
-XXXX-XX-XX: Translated comments to English
+2020-12-29: Translated comments to English
 """
 
 import pandas as pd
 
 def readInput(fileName, sheet):
-    '''Allgemeine Input-Funktion. Nimmt den Dateinamen der Excel-Datei, in der
-    sich die Waffendaten befinden und liest den Inhalt als DataFrame ein.
-    Die untergeordnete readInputWeapons()-Funktion zerteilt die Eingabe nach
-    einzelnen Waffen und Attacken.'''
+    """
+    Input function. Opens the given Excel file and imports the selected sheet
+    as a whole into a pandas.DataFrame which can be further handled.
+        
+    Parameters
+    ----------
+    fileName : str
+        Name of input file.
+    sheet : int or str
+        Sheet of input file. Accepts a sheet name (str) or a sheet index (int).
+
+    Returns
+    -------
+    dfWeaponList : list
+        two-dimensional list containing attacks which themselves contain weapon
+        data.
     
-    # Waffendaten aus Excel-Datei einlesen
-    # sheet akzeptiert sowohl den Index des Zeichenblattes als auch den Namen
-    # als Zeichenkette
-    # header=None hindert Pandas daran, die erste Zeile als Kopfzeile zu
-    # behandeln, was uns Schwierigkeiten machen würde.
+    """
+    
+    # Read Weapon data from Excel file. header=None prevents pandas from assuming
+    # a header line, which the input file does not have.
     dfWeapon = pd.read_excel(fileName, sheet_name=sheet, header=None)
-    
-    # Zelle A1 legt die spezifische Eingabefunktion fest
-    # functionFlag = dfWeapon.at[0,0]
-    
-    # Erste Spalte der Eingabe wird nicht gebraucht
-    # dfWeapon = dfWeapon.drop(labels=0, axis=1)
-    
     dfWeaponList = readInputWeapons(dfWeapon)
     
     return dfWeaponList
 
 def readInputWeapons(dfWeapon):
-    '''Funktion zum Zerlegen des DataFrames aus der Eingabe-Excel-Datei.
-    Dieser hat folgende Form
-                    Waffe1  Waffe1  ...
-    Eigenschaft 1   xxx     xxx     ...
-    Eigenschaft 2   xxx     xxx     ...
+    """
+    This function accepts a DataFrame from an Excel import and partitions it
+    into attacks and weapons.
+        
+    Parameters
+    ----------
+    dfWeapon : pandas.DataFrame
+        The input is a single DataFrame which 1:1 represents the input file.
+
+    Returns
+    -------
+    dfWeaponList : list
+        Two-dimensional list with attacks and weapons.
     
-                    Waffe2  Waffe2  ...
-    Eigenschaft 1   xxx     xxx     ...
-    ...             ...     ...     ...
+    """
     
-    The weapon properties are fixed regarding their order and may not be mixed
-    up.
-    '''
-    
-    # Die erste Spalte enthält Beschreibungen der Zeileninhalte und wird damit
-    # genutzt, um die Leerzeilen zu finden, an denen der DataFrame geteilt wird.
+    # The first column of the input file contains description text for the row
+    # contents and is helpful for finding empty lines, which divide weapons
+    # from each other.
+    # The input is searched row-wise to find completely empty rows. The indices
+    # of those rows are written to cutIndexHorizontal
+    # An empty row contains only NaN entries, which means that isna() of this
+    # row only contains True.
     cutIndexHorizontal = [-1]
     
     cutMap = dfWeapon.isna().values
@@ -56,31 +67,31 @@ def readInputWeapons(dfWeapon):
         if not False in cutMap[i,:]:
             cutIndexHorizontal.append(i)
     
-    # Anschließend die erste Spalte abtrennen, sie wird nicht mehr gebraucht.
+    # The first column is no longer needed after that and is removed.
     dfWeapon = dfWeapon.drop(labels=0, axis=1)
     
-    # Nach Leerzeilen suchen. An dieser werden die verschiedenen Angriffe des
-    # Sheets voneinander getrennt.
+    # The attacks are separated by empty columns.
+    # The process is exactly the same as the search for empty rows above.
     cutIndexVertical = [-1]
 
-    # dfWeapon.isna() nach True-Spalten durchsuchen, an denen muss getrennt werden.
+    # dfWeapon.isna() is searched for columns with only True-entries.
     cutMap = dfWeapon.isna().values
     for i in range(dfWeapon.values.shape[1]):
         if not False in cutMap[:,i]:
             cutIndexVertical.append(i)
     
-    # dfWeapon gemäß der Indizes in cutIndexVertical zerteilen
-    # Die Einträge werden in dfAttackList zwischengespeichert, bevor sie im
-    # nächsten Schritt weiter zerteilt und in dfWeaponList gesteckt werden.
+    # dfWeapon is now separated along the empty columns to separate attacks from
+    # each other. They are temporarily stored in dfAttackList, before they are
+    # split along empty rows to separate weapons from each other.
     dfAttackList = []
     for index in range(1,len(cutIndexVertical)):
         dfAttackList.append(dfWeapon.iloc[:,cutIndexVertical[index-1]+1:cutIndexVertical[index]])
     
     dfAttackList.append(dfWeapon.iloc[:,cutIndexVertical[-1]+1:])
 
-    # Die dabei entstandenen DataFrames werden jetzt horizontal geteilt und
-    # in dfWeaponList einsortiert, wobei leere DataFrames weggelassen werden.
-    # Leere Waffenliste initialisieren
+    # Horizontal splitting of the attacks and storing the resulting weapon
+    # dataFrames in dfWeaponList, grouped by attack.
+    # dfWeaponList looks like this: [[A1W1, A1W2], [A2W1], [A3W1, A3W2, A3W3]]
     dfWeaponList = []
 
     for a in range(len(dfAttackList)):
