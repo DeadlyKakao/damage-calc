@@ -13,6 +13,8 @@ Instructions/Explanations/Versions
 - Completion of Sheet.outputDataComplete()
 - Introduction of Damage Types
 - Introduction of Energy Resistance
+- Estimation of applicability of certain damage components and factoring percentage
+    into overall damage calculation
 
 
 **********************
