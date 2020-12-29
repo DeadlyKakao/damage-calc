@@ -9,6 +9,7 @@ wrapped up in an input Excel sheet.
     Added function graphStonks()
     Added argument for output file name to graph functions
     Added argument for graph title to graph functions
+    Added functions printData() and printDataComplete()
 """
 
 import numpy as np
@@ -29,7 +30,7 @@ class Sheet:
     which contains one or more weapons.
     """
     
-    def __init__(self, dfWeaponList, minAC=10, maxAC=40):
+    def __init__(self, inputDataTuple, minAC=10, maxAC=40):
         """
         The constructor of the Sheet class takes a two-dimensional list of
         pandas.DataFrames as given by inputWeapons and uses it to create as many
@@ -37,9 +38,10 @@ class Sheet:
         
         Parameters
         ----------
-        dfWeaponList : list
-            2D-list of pandas.DataFrame objects. Every column in this list
-            represents one attack with one or more weapons.
+        inputDataTuple : 2-tuple
+            1st part: 2D-list of pandas.DataFrame objects. Every column in this
+            list represents one attack with one or more weapons.
+            2nd part: list of attack names
         minAC : int, optional
             Lower limit of target AC for calculations.
         maxAC : int, optional
@@ -53,11 +55,15 @@ class Sheet:
         
         self.attacks = []
         
+        # Split inputDataTuple into weapon list and attack name list
+        dfWeaponList = inputDataTuple[0]
+        attackNames = inputDataTuple[1]
+        
         # Create a result array
         self.acRange = (minAC, maxAC)
         self.results = np.arange(minAC, maxAC+1).transpose()
         for a in range(len(dfWeaponList)):
-            newAttack = atk.Attack(dfWeaponList[a], minAC, maxAC)
+            newAttack = atk.Attack(dfWeaponList[a], attackNames[a], minAC, maxAC)
             self.attacks.append(newAttack)
             self.results = np.c_[self.results, newAttack.results[:,1]]
         
@@ -115,7 +121,7 @@ class Sheet:
                      color=colorCycle[(i-1)%len(colorCycle)],
                      marker=markerCycle[(i-1)%len(markerCycle)],
                      linewidth=1, markersize=4.2)
-            legendList.append(self.attacks[i].weapons[0].name)
+            legendList.append(self.attacks[i].name)
         
         # Remaining graph settings
         legendList[0] = legendList[0] + " (Base)"
@@ -169,7 +175,7 @@ class Sheet:
                      color=colorCycle[i%len(colorCycle)],
                      marker=markerCycle[i%len(markerCycle)],
                      linewidth=1, markersize=4.2)
-            legendList.append(self.attacks[i+1].weapons[0].name)
+            legendList.append(self.attacks[i+1].name)
         
         # Remaining graph settings
         legend = plt.legend(legendList, bbox_to_anchor=(1, 1))
@@ -258,7 +264,7 @@ class Sheet:
         
         cols = ["AC"]
         for i in range(0, self.results.shape[1]-1):
-            cols.append(self.attacks[i].weapons[0].name)
+            cols.append(self.attacks[i].name)
             
         df = pd.DataFrame(data=self.results,
                           index=np.arange(self.acRange[0], self.acRange[1]+1),
@@ -284,4 +290,26 @@ class Sheet:
         
         """
 
+        pass
+
+    def printData(self):
+        """
+        Prints the same data that would be output with outputData().
+        
+        Returns
+        -------
+        None.
+        
+        """
+        pass
+
+    def printDataComplete(self):
+        """
+        Prints the same data that would be output with outputDataComplete().
+        
+        Returns
+        -------
+        None.
+        
+        """
         pass

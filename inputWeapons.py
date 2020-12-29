@@ -32,9 +32,17 @@ def readInput(fileName, sheet):
     # Read Weapon data from Excel file. header=None prevents pandas from assuming
     # a header line, which the input file does not have.
     dfWeapon = pd.read_excel(fileName, sheet_name=sheet, header=None)
-    dfWeaponList = readInputWeapons(dfWeapon)
     
-    return dfWeaponList
+    # The first row contains the attack names, they are separated here and
+    # stored in a separate list
+    attackNames = []
+    attackRow = dfWeapon.iloc[0,:]
+    for a in attackRow[~pd.isnull(attackRow)]:
+        attackNames.append(str(a))
+    
+    dfWeaponList = readInputWeapons(dfWeapon.iloc[1:,:])
+    
+    return dfWeaponList, attackNames
 
 def readInputWeapons(dfWeapon):
     """

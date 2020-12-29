@@ -17,7 +17,7 @@ class Attack:
     It summarizes the damage information and provides easier access.
     """
     
-    def __init__(self, dfWeapons, minAC, maxAC):
+    def __init__(self, dfWeapons, name, minAC, maxAC):
         """
         The constructor takes a list of weapon DataFrames and the upper and
         lower bounds of the target AC for all weapon calculations. It creates
@@ -29,6 +29,8 @@ class Attack:
         dfWeapons : list
             List of pandas.DataFrame objects which contain the properties of 
             an entire column of weapons, where each weapon is a DataFrame.
+        name : str
+            Name of the attack as defined in the input file
         minAC : int
             Lower limit of target AC for calculations.
         maxAC : int
@@ -40,6 +42,7 @@ class Attack:
 
         """
         
+        self.name = name
         self.weapons = []
         # Create a new Weapon object for every weapon DataFrame in dfWeapons.
         for weapon in dfWeapons:
@@ -112,4 +115,4 @@ class Attack:
         
         for w in self.weapons:
             self.results = np.c_[self.results, w.attackResults[:,0]]
-            self.results[:,1] = self.results[:,1] + w.attackResults[:,0]
+            self.results[:,1] += w.attackResults[:,0]

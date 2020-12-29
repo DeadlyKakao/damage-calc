@@ -9,12 +9,14 @@ Instructions/Explanations/Versions
 
 *** Planned Features ***
 - Writing the README/Instructions
+- Protection against invalid input files
 - Completion of test sheet for the program
 - Completion of Sheet.outputDataComplete()
 - Introduction of Damage Types
 - Introduction of Energy Resistance
 - Estimation of applicability of certain damage components and factoring percentage
     into overall damage calculation
+- GUI
 
 
 **********************
@@ -56,9 +58,9 @@ maxAC = 40
 # Start of calculation execution
 sheet = sht.Sheet(iw.readInput(inputFileName, excelSheet), minAC, maxAC)
 
-# print(sheet.attacks[0].weapons[0].critChance(0))
+# print(sheet.attacks[0].weapons[0].attackResults)
 
-sheet.listAttacks()
+# sheet.listAttacks()
 # print(sheet.results)
 # print(sheet.diffResults)
 # sheet.graphAbsolute()
