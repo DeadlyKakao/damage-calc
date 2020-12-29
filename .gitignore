@@ -4,3 +4,6 @@
 # Lock files from Excel/LibreOffice
 .~*.xls*
 .~*.ods*
+
+# pycache folder
+/__pycache__
