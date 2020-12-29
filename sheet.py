@@ -126,7 +126,7 @@ class Sheet:
         # Remaining graph settings
         legendList[0] = legendList[0] + " (Base)"
         legend = plt.legend(legendList, bbox_to_anchor=(1, 1))
-        plt.title("Average Damage")
+        plt.title(graphTitle)
         plt.xlabel("Target AC")
         plt.ylabel("Damage")
         plt.xlim(self.acRange)
@@ -179,7 +179,7 @@ class Sheet:
         
         # Remaining graph settings
         legend = plt.legend(legendList, bbox_to_anchor=(1, 1))
-        plt.title("Average damage difference to base case")
+        plt.title(graphTitle)
         plt.xlabel("Target AC")
         plt.ylabel("Damage")
         plt.xlim(self.acRange)
@@ -294,18 +294,19 @@ class Sheet:
 
     def printData(self):
         """
-        Prints the same data that would be output with outputData().
+        Prints the same data to console that would be output with outputData().
         
         Returns
         -------
         None.
         
         """
-        pass
+        print(self.results)
 
     def printDataComplete(self):
         """
-        Prints the same data that would be output with outputDataComplete().
+        Prints the same data to console that would be output with
+        outputDataComplete().
         
         Returns
         -------

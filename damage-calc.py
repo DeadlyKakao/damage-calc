@@ -12,6 +12,7 @@ Instructions/Explanations/Versions
 - Protection against invalid input files
 - Completion of test sheet for the program
 - Completion of Sheet.outputDataComplete()
+- Representation of monster abilities like constrict, rend, rake etc.
 - Introduction of Damage Types
 - Introduction of Energy Resistance
 - Estimation of applicability of certain damage components and factoring percentage
@@ -48,12 +49,12 @@ outputFileName = "output_test.xlsx"
 
 # Name of the sheet that the program should use
 # (Numerical index or sheet name as string works)
-excelSheet = "Salvador"
-# excelSheet = 3
+# excelSheet = "Salvador"
+excelSheet = "Irgwi-Tiergestalt"
 
 # AC range for the calculation, given in minimum and maximum value (default 10 and 40)
-minAC = 10
-maxAC = 40
+minAC = 5
+maxAC = 35
 
 # Start of calculation execution
 sheet = sht.Sheet(iw.readInput(inputFileName, excelSheet), minAC, maxAC)
@@ -63,6 +64,7 @@ sheet = sht.Sheet(iw.readInput(inputFileName, excelSheet), minAC, maxAC)
 # sheet.listAttacks()
 # print(sheet.results)
 # print(sheet.diffResults)
-# sheet.graphAbsolute()
-sheet.graphDifference()
+sheet.graphAbsolute(graphTitle="Irgwi Tiergestalt")
+sheet.graphDifference(graphTitle="Irgwi Tiergestalt (Differenz)")
 # sheet.outputData(outputFileName)
+# sheet.printData()
