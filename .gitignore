@@ -1,0 +1,6 @@
+# Images created by the program
+*.png
+
+# Lock files from Excel/LibreOffice
+~*.xls*
+~*.ods*
