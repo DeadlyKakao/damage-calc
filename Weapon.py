@@ -27,6 +27,15 @@ class Weapon :
         minAC:    Minimum target AC for hit chance calculations
         maxAC:    Maximum target AC for hit chance calculations
 
+        Parameters
+        ----------
+        dfWeapon : pandas.DataFrame
+            DataFrame which contains every weapon property from the input file.
+        minAC :    int
+            Lower limit of target AC for calculations.
+        maxAC :    int
+            Upper limit of target AC for calculations.
+
         Returns
         -------
         self : Weapon
@@ -97,6 +106,11 @@ class Weapon :
         A dice pair is always <first cell>d<second cell>.
         This function returns a list of 2-tuples containing these dice pairs.
 
+        Parameters
+        ----------
+        line : pandas.DataFrame
+            Input line which contains the dice description in cell pairs.
+
         Returns
         -------
         diceArray : list
@@ -123,6 +137,11 @@ class Weapon :
         which is sorted by die size.
         Example: [(2,6), (1,8), (1,4)] -> [4, 6, 6, 8]
 
+        Parameters
+        ----------
+        diceTupleList : list
+            List of dice tuples to compile into a list.
+
         Returns
         -------
         sorted(diceList) : list
@@ -139,6 +158,10 @@ class Weapon :
     def listData(self):
         """
         Output function that prints weapon properties to the console.
+
+        Parameters
+        ----------
+        None
 
         Returns
         -------
@@ -187,6 +210,10 @@ class Weapon :
         be rolled on a normal hit.
         Example: 1d4 + 2d6 + 1d12 becomes [4, 6, 6, 12]
 
+        Parameters
+        ----------
+        None
+
         Returns
         -------
         sorted(diceList) : list
@@ -210,6 +237,10 @@ class Weapon :
     def listDiceCrit(self):
         """
         As listDiceHit(), but for critical hits
+
+        Parameters
+        ----------
+        None.
 
         Returns
         -------
@@ -240,6 +271,11 @@ class Weapon :
         This function generates a grouped list of dice from an ungrouped list.
         Example: [3, 3, 4, 6, 6] becomes [[2,3], [1,4], [2,6]]
 
+        Parameters
+        ----------
+        diceList : list
+            List of dice to group.
+
         Returns
         -------
         diceGroup : list
@@ -267,6 +303,10 @@ class Weapon :
         Outputs a short string with full attack bonuses and damage expression
         for a normal hit.
 
+        Parameters
+        ----------
+        None
+
         Returns
         -------
         s : str
@@ -289,6 +329,10 @@ class Weapon :
     def weaponStringCrit(self):
         """
         As weaponStringHit(), but for critical hits.
+
+        Parameters
+        ----------
+        None
 
         Returns
         -------
@@ -326,6 +370,10 @@ class Weapon :
         The program also checks if the damage reduction is actually able to
         reduce damage dealt to zero, otherwise the creation of a dice array is
         not necessary.
+
+        Parameters
+        ----------
+        None
 
         Returns
         -------
@@ -367,6 +415,10 @@ class Weapon :
         """
         As calcDamageHit(), but for critical hits
 
+        Parameters
+        ----------
+        None
+
         Returns
         -------
         avgDamage : float
@@ -405,6 +457,11 @@ class Weapon :
         This function calculates the average dice roll according to this formula:
         avg(xdy) = x * (y+1)/2
 
+        Parameters
+        ----------
+        diceList : list
+            List of dice to calculate average damage from.
+
         Returns
         -------
         damage : float
@@ -430,6 +487,11 @@ class Weapon :
         1   6   7   8   9
         2   7   8   9   10
         3   8   9   10  11
+
+        Parameters
+        ----------
+        diceList : list
+            List of dice to create array from.
 
         Returns
         -------
@@ -458,6 +520,11 @@ class Weapon :
         hit chance is appropriately modified by the given BAB penalty depending
         on the attack.
 
+        Parameters
+        ----------
+        bab : int
+            Additional roll penalty for iterative attacks, twf, secondary etc.
+
         Returns
         -------
         result : np.array
@@ -480,6 +547,11 @@ class Weapon :
     def critChance(self, bab):
         """
         As hitChance(bab), but for the chance of critical hits.
+
+        Parameters
+        ----------
+        bab : int
+            Additional roll penalty for iterative attacks, twf, secondary etc.
 
         Returns
         -------
@@ -518,9 +590,13 @@ class Weapon :
         element in self.baseAttacks, while the first columns contains the sum
         of every row.
 
+        Parameters
+        ----------
+        None
+
         Returns
         -------
-        attackResults : nd.array
+        attackResults : np.array
             Average damage of weapon, corresponding to target AC.
 
         """
