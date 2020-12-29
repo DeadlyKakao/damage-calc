@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-""" Instructions/Explanations/Versions
+"""
+Instructions/Explanations/Versions
 
 
 
 
 
 *** Planned Features ***
+- Completion of test sheet for the program
 - Introduction of Damage Types
 - Introduction of Energy Resistance
 
@@ -19,7 +21,7 @@ Author: Daniel Kranz
 Additional Contributions by: Maxime Fleury
 
 *** Version History: ***
-2020-12-28 0.1: First Version
+2020-12-29 0.1: First Version
 """
 
 import numpy as np
@@ -49,6 +51,8 @@ maxAC = 40
 
 # Start of calculation execution
 sheet = sht.Sheet(iw.readInput(inputFileName, excelSheet), minAC, maxAC)
+
+print(sheet.attacks[0].weapons[0].critChance(0))
 
 # sheet.listAttacks()
 # print(sheet.results)

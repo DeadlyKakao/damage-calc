@@ -4,7 +4,9 @@
 weapon.py provides the Weapon class for weapon representation.
 
 *** Recent Changes: ***
-2020-12-28: Translated comments to English
+2020-12-29: Translated comments to English,
+    refactored the groupDice*() functions to a single groupDice(diceList) function
+    removed damageBonus argument from createDiceArray()
 """
 
 import numpy as np
@@ -24,15 +26,27 @@ class Weapon :
         dfWeapon: DataFrame containing weapon properties
         minAC:    Minimum target AC for hit chance calculations
         maxAC:    Maximum target AC for hit chance calculations
+
+        Returns
+        -------
+        self : Weapon
         """
         
         self.name = dfWeapon.iloc[0,0]                                          # Weapon name: Useful for distinction in the later results
         self.baseDice = self.diceLineConversion(dfWeapon.iloc[1,:].values)      # Base Weapon Damage Dice
         
-        # Die Grundangriffszeile enthält so viele Einträge, wie es Angriffe im
-        # Fall eines vollen Angriffs gibt, mit den dazugehörigen GAB-Mali.
-        # Ein Standardangriff hat dabei den Wert 0, während spätere Angriffe
-        # negative Werte aufweisen.
+        """
+        The baseAttacks list contains as many elements as the weapon has
+        attacks in a full attack. Every element matches the corresponding
+        BAB penalty. A standard weapon with BAB=8 (2 attacks on a full attack)
+        would yield [0, -5] as baseAttacks. The same weapon with the haste
+        buff has [0, 0, -5] as baseAttacks as haste grants an extra attack
+        at full BAB. Penalties from two-weapon fighting should also be
+        considered in baseAttacks
+        If the wielder adds an off-hand weapon with the TWF and ITWF feats,
+        baseAttacks becomes [-2, -2, -7], while the off-hand weapon (which is
+        a separate Weapon object) gets [-2, -7]
+        """
         baseAttacksLine = dfWeapon.iloc[2,:].values
         self.baseAttacks = []
         for i in baseAttacksLine[~pd.isnull(baseAttacksLine)]:
@@ -56,46 +70,65 @@ class Weapon :
         self.acRange = [minAC, maxAC]                                           # AC range to consider for damage calculations
         self.acArray = np.arange(self.acRange[0], self.acRange[1]+1)
         
-        # Berechnung der gesamten Schadensboni für normale und kritische Treffer
-        # aus den einzelnen Schadensboni.
+        # Calculation of overall damage bonus for normal and critical hits
+        # from the individual damage bonuses
+        # Immunity vs. precision damage is considered here
         self.damageHit = self.damageBonus + self.extraDamage
         if self.precImmunity == 0:
-            self.damageHit = self.damageHit + self.precisionDamage
+            self.damageHit += self.precisionDamage
         self.damageCrit = self.damageBonus * self.critMultiplier + self.precisionDamage + self.extraDamage + self.extraCritDamage
         if self.precImmunity == 0:
-            self.damageCrit = self.damageCrit + self.precisionDamage
+            self.damageCrit += self.precisionDamage
         
-        # Berechnung des durchschnittlichen Schadens pro Treffer und pro
-        # kritischem Treffer unter Berücksichtigung aller Schadenswürfel und Boni.
+        # Calculation of average damage per hit and per critical hit
+        # considering all damage dice and bonuses
         self.avgDamageHit = self.calcDamageHit()
         self.avgDamageCrit = self.calcDamageCrit()
         
-        # Berechnung des Schadens-Arrays nach 
+        # Calculation of average damage array considering the given AC range
         self.attackResults = self.calcAttacks()
     
     def diceLineConversion(self, line):
-        '''Die Würfelnotation der Eingabe erfolgt immer in Zellpaaren und
-        jede Zeile mit Würfelnotation kann eine oder mehrere dieser Paarungen
-        enthalten, die nicht mit der Gesamtlänge der Zeile zusammenhängt.
-        Ein Würfelpaar ist immer <Erste Zelle>d<Zweite Zelle>'''
+        """
+        The input dice notation always occurs in pairs of table cells and every
+        row with dice notation can contain no, one or more of those pairs,
+        which has no connection to the actual row length, which is just
+        determined from the longest row in the entire array.
+        A dice pair is always <first cell>d<second cell>.
+        This function returns a list of 2-tuples containing these dice pairs.
+
+        Returns
+        -------
+        diceArray : list
+            List of 2-tuples which describe the dice number and types given
+            in a single line of the input file, in the form of
+            a1db1, a2db2 -> [(a1,b1), (a2,b2)].
+        """
         
-        # Da die Zeilenlänge nichts mit der Anzahl der Würfelpaare zu tun hat,
-        # zuerst NaN-Einträge entfernen.
+        # Remove NaN entries in the passed line
         line = line[~pd.isnull(line)]
-        # Leere Liste, in die die Würfel als 2-Tupel geschrieben werden.
+        # Initialise empty list which takes the dice pairs as tuples
         diceArray = []
-        # Übrige Zellen paarweise durchgehen
+        # Cycle through non-NaN cells in pairs
         for i in [2*x for x in range(int(line.size/2))]:
-            # Einträge mit 0 als Angabe ebenfalls ignorieren
-            if line[i] != 0 or line[i+1] != 0:
+            # Ignore any pair where one of the cells contains zero
+            if line[i] != 0 and line[i+1] != 0:
                 diceArray.append((int(line[i]),int(line[i+1])))
         
         return diceArray
 
     def diceTupleToList(self, diceTupleList):
-        '''Einfache Funktion, die aus der Tupel-Darstellung der Schadenswürfel
-        eine (nach Würfelgröße sortierte) Liste erstellt.
-        [(2,6), (1,8), (1,4)] -> [4, 6, 6, 8]'''
+        """
+        Simple function to convert the tuple notation of dice pairs to a list
+        which is sorted by die size.
+        Example: [(2,6), (1,8), (1,4)] -> [4, 6, 6, 8]
+
+        Returns
+        -------
+        sorted(diceList) : list
+            List of dice from a given dice tuple list n the form of
+            [x, ..., x, y, ..., y, ...], sorted ascending by dice type.
+        """
         
         diceList = []
         for t in diceTupleList:
@@ -104,49 +137,62 @@ class Weapon :
         return sorted(diceList)
 
     def listData(self):
-        '''Diese Funktion stellt eine Ausgabe der Waffendaten zur Verfügung'''
+        """
+        Output function that prints weapon properties to the console.
+
+        Returns
+        -------
+        None.
         
-        justLength = 26
-        print("Waffe:".ljust(justLength) + "{}".format(self.name))
+        """
+        
+        justLength = 30
+        print("Weapon:".ljust(justLength) + "{}".format(self.name))
         s = ""
         for t in self.baseDice:
-            s = s + str(t[0]) + "W" + str(t[1]) + " + "
-        print("Grund-Schadenswürfel:".ljust(justLength) + "{}".format(s[:-3]))
+            s += str(t[0]) + "d" + str(t[1]) + " + "
+        print("Base Damage Dice:".ljust(justLength) + "{}".format(s[:-3]))
         s = ""
         for t in self.baseAttacks:
-            s = s + str(t) + "/"
-        print("Voller Angriff:".ljust(justLength) + "{}".format(s[:-1]))
-        print("Angriffsbonus:".ljust(justLength) + "{}".format(self.attackBonus))
-        print("Schadensbonus:".ljust(justLength) + "{}".format(self.damageBonus))
-        print("Bedrohungsbereich:".ljust(justLength) + "{}".format(self.critRange))
-        print("Kritischer Multiplikator:".ljust(justLength) + "{}".format(self.critMultiplier))
-        print("Bestätigungsbonus:".ljust(justLength) + "{}".format(self.critConfirmBonus))
+            s += str(t) + "/"
+        print("Full Attack:".ljust(justLength) + "{}".format(s[:-1]))
+        print("Attack Bonus:".ljust(justLength) + "{}".format(self.attackBonus))
+        print("Damage Bonus:".ljust(justLength) + "{}".format(self.damageBonus))
+        print("Critical Threat Range:".ljust(justLength) + "{}".format(self.critRange))
+        print("Critical Multiplier:".ljust(justLength) + "{}".format(self.critMultiplier))
+        print("Confirmation Bonus:".ljust(justLength) + "{}".format(self.critConfirmBonus))
         s = ""
         for t in self.precisionDice:
-            s = s + str(t[0]) + "W" + str(t[1]) + " + "
-        print("Präzisionsschadenswürfel:".ljust(justLength) + "{}".format(s[:-3]))
-        print("Präzisionsschadensbonus:".ljust(justLength) + "{}".format(self.precisionDamage))
+            s += str(t[0]) + "d" + str(t[1]) + " + "
+        print("Precision Damage Dice:".ljust(justLength) + "{}".format(s[:-3]))
+        print("Precision Damage Bonus:".ljust(justLength) + "{}".format(self.precisionDamage))
         s = ""
         for t in self.extraDice:
-            s = s + str(t[0]) + "W" + str(t[1]) + " + "
-        print("Zusatzschadenswürfel:".ljust(justLength) + "{}".format(s[:-3]))
+            s += str(t[0]) + "d" + str(t[1]) + " + "
+        print("Additional Damage Dice:".ljust(justLength) + "{}".format(s[:-3]))
         s = ""
         for t in self.extraCritDice:
-            s = s + str(t[0]) + "W" + str(t[1]) + " + "
-        print("Kritische Zusatzwürfel:".ljust(justLength) + "{}".format(s[:-3]))
-        print("Zusatzschaden:".ljust(justLength) + "{}".format(self.extraDamage))
-        print("Kritischer Zusatzschaden:".ljust(justLength) + "{}".format(self.extraCritDamage))
-        print("Bollwerk:".ljust(justLength) + "{} %".format(self.fortification*1e2))
-        print("Präzisionsimmunität:".ljust(justLength) + "{}".format(self.precImmunity))
-        print("Fehlschlagchance:".ljust(justLength) + "{} %".format(self.failChance*1e2))
-        print("Schadensreduzierung:".ljust(justLength) + "{}".format(self.damageReduction))
-        print("RK-Bereich:".ljust(justLength) + "{} - {}".format(self.acRange[0], self.acRange[1]))
+            s += str(t[0]) + "d" + str(t[1]) + " + "
+        print("Additional Critical Dice:".ljust(justLength) + "{}".format(s[:-3]))
+        print("Bonus Damage (no Crit.):".ljust(justLength) + "{}".format(self.extraDamage))
+        print("Bonus Damage (only on Crit.):".ljust(justLength) + "{}".format(self.extraCritDamage))
+        print("Fortification Chance:".ljust(justLength) + "{} %".format(self.fortification*1e2))
+        print("Immunity vs. Precision:".ljust(justLength) + "{}".format(self.precImmunity))
+        print("Failure Chance:".ljust(justLength) + "{} %".format(self.failChance*1e2))
+        print("Damage Reduction:".ljust(justLength) + "{}".format(self.damageReduction))
     
     def listDiceHit(self):
-        '''Diese Funktion erstellt eine geordnete Liste aller Schadenswürfel
-        mit der entsprechenden Anzahl, die im Falle eines normalen Treffers
-        gewürfelt werden müssen.
-        1W4 + 2W6 + 1W12 wird mit dieser Funktion zu [4, 6, 6, 12]'''
+        """
+        This function generates a sorted list of all damage dice which need to
+        be rolled on a normal hit.
+        Example: 1d4 + 2d6 + 1d12 becomes [4, 6, 6, 12]
+
+        Returns
+        -------
+        sorted(diceList) : list
+            List of damage dice for a normal hit in the form of
+            [x, ..., x, y, ..., y, ...], sorted ascending by dice type.
+        """
         
         diceList = []
         for t in self.baseDice:
@@ -162,8 +208,15 @@ class Weapon :
         return sorted(diceList)
         
     def listDiceCrit(self):
-        '''Diese Funktion funktioniert genau wie listDiceHit(), allerdings
-        für kritische Treffer.'''
+        """
+        As listDiceHit(), but for critical hits
+
+        Returns
+        -------
+        sorted(diceList) : list
+            List of damage dice for a critical hit in the form of
+            [x, ..., x, y, ..., y, ...], sorted ascending by dice type.
+        """
         
         diceList = []
         for t in self.baseDice:
@@ -182,173 +235,241 @@ class Weapon :
                 diceList.append(t[1])
         return sorted(diceList)
     
-    def groupDiceHit(self):
-        '''Aufstellen eine gruppierten Würfelliste für normale Treffer
-        Aus der Würfelliste [3, 3, 4, 6, 6] wird [[2,3], [1,4], [2,6]]'''
+    def groupDice(self, diceList):
+        """
+        This function generates a grouped list of dice from an ungrouped list.
+        Example: [3, 3, 4, 6, 6] becomes [[2,3], [1,4], [2,6]]
+
+        Returns
+        -------
+        diceGroup : list
+            List containing a list for every dice type in the form of [x, y]
+            corresponding to xdy.
+        """
         
-        diceList = self.listDiceHit()
-        # Würfelgruppenliste wird mit dem ersten Eintrag der Würfelliste initialisiert
+        # The input list is assumed to be sorted because every function that
+        # generates such a list returns it sorted.
+        # list is initialised with the first entry from the passed dice list.
         diceGroup = [[1, diceList[0]]]
         
         lastDice = diceList[0]
+        # Cycle through list
         for d in diceList[1:]:
             if d == lastDice:
-                diceGroup[-1][0] = diceGroup[-1][0] + 1
-            else:
-                diceGroup.append([1,d])
-            lastDice = d
-        return diceGroup
-    
-    def groupDiceCrit(self):
-        '''Aufstellen eine gruppierten Würfelliste für kritische Treffer'''
-        
-        diceList = self.listDiceCrit()
-        # Würfelgruppenliste wird mit dem ersten Eintrag der Würfelliste initialisiert
-        diceGroup = [[1, diceList[0]]]
-        
-        lastDice = diceList[0]
-        for d in diceList[1:]:
-            if d == lastDice:
-                diceGroup[-1][0] = diceGroup[-1][0] + 1
+                diceGroup[-1][0] += 1
             else:
                 diceGroup.append([1,d])
             lastDice = d
         return diceGroup
     
     def weaponStringHit(self):
-        '''Ausgabe einer Zeichenkette, die Angriffsbonus und Schaden für einen
-        normalen Treffer abbildet'''
+        """
+        Outputs a short string with full attack bonuses and damage expression
+        for a normal hit.
+
+        Returns
+        -------
+        s : str
+            Short weapon rolls description with normal damage.
+        """
         
         s = ""
-        diceGroup = self.groupDiceHit()
+        diceGroup = self.groupDice(self.listDiceHit())
         attacks = np.array(self.baseAttacks) + self.attackBonus
         for b in attacks:
-            s = s + "{0:+d}".format(b) + "/"
+            s += "{0:+d}".format(b) + "/"
         s = s[:-1] + ", "
         for l in diceGroup:
-            s = s + str(l[0]) + "W" + str(l[1]) + " + "
+            s += str(l[0]) + "d" + str(l[1]) + " + "
         s = s[:-3]
         damage = self.damageHit
-        s = s + "+" + str(damage)
+        s += "+" + str(damage)
         return s
     
     def weaponStringCrit(self):
-        '''Ausgabe einer Zeichenkette, die Angriffsbonus und Schaden für einen
-        kritischen Treffer abbildet'''
+        """
+        As weaponStringHit(), but for critical hits.
+
+        Returns
+        -------
+        s : str
+            Short weapon rolls description with critical damage.
+        """
         
         s = ""
-        diceGroup = self.groupDiceCrit()
+        diceGroup = self.groupDice(self.listDiceCrit())
         attacks = np.array(self.baseAttacks) + self.attackBonus
         for b in attacks:
-            s = s + "{0:+d}".format(b) + "/"
+            s += "{0:+d}".format(b) + "/"
         if self.critConfirmBonus != 0:
-            s = s[:-1] + " (+" + str(self.critConfirmBonus) + " Bestätigung) "
+            s = s[:-1] + " (+" + str(self.critConfirmBonus) + " Confirmation) "
         s = s[:-1] + ", "
         for l in diceGroup:
-            s = s + str(l[0]) + "W" + str(l[1]) + " + "
+            s += str(l[0]) + "d" + str(l[1]) + " + "
         s = s[:-3]
         damage = self.damageCrit
-        s = s + "+" + str(damage)
+        s += "+" + str(damage)
         
         return s
     
     def calcDamageHit(self):
-        '''Berechnung des durchschnittlichen Schadens pro (normalem) Treffer
-        abhängig von den gegebenen Daten des Weapon-Objektes'''
+        """
+        Calculation of average damage per normal hit from weapon properties.
+        This function generates a np.array with as many dimensions as damage dice
+        to calculate every possible dice outcome in order to accurately represent
+        the influence of damage reduction on the average damage since it can
+        not reduce damage dealt below zero, thus damage reduction vastly
+        complicates the damage calculation.
+        This array grows exponentially with amount of dice which quickly becomes
+        a problem with weapons that get several additional dice like sneak attacks.
+        The array size is capped to prevent calculation times of several minutes.
+        The program also checks if the damage reduction is actually able to
+        reduce damage dealt to zero, otherwise the creation of a dice array is
+        not necessary.
+
+        Returns
+        -------
+        avgDamage : float
+            Average damage per normal hit.
+        """
         
+        # Get dice list for normal hits
         diceList = self.listDiceHit()
         
-        # Wenn die Anzahl der möglichen Würfelkombinationen zu hoch ist, die
-        # genaue Berechnung nicht durchführen.
-        # Wenn der minimale Schaden nicht kleiner als die Schadensreduzierung
-        # ist, kann man sich die genaue Berechnung ebenfalls sparen
+        # Two conditions need to be met for the program to create the complete
+        # dice array:
+        # The size of the array (= possible dice combinations) needs to be
+        # below 1e6 and the damage reduction must be greater than the minimum
+        # damage roll (every die rolls a one)
         minDamage = len(diceList) + self.damageHit
         if minDamage >= self.damageReduction or np.prod(diceList) > 1e6:
+            
+            # Without complete dice array, the average damage is calculated as
+            # average dice roll plus bonuses minus damage reduction
             avgDamage = (self.calcDamageFromDice(diceList)
                          + self.damageHit - self.damageReduction)
         
         else:
-            print("Würfel-Array erstellt.")
+            print("Created complete dice array.")
             diceArray = self.createDiceArray(diceList, self.damageHit)
             avgDamage = np.sum(diceArray) / np.size(diceArray)
         
-        # Weiterrechnung mit dem durchschnittlichen Schaden pro Treffer
-        # Sonderklausel für Präzisionsschadenswürfel und die Bollwerk-Verzauberung
-        # Diese kann das Ergebnis mit Schadensreduzierung leicht verfälschen
+        # Extra condiction for fortification and precision damage dice
+        # This can slightly falsify the result with damage reduction
+        # Note: Fortification does not affect flat precision damage bonuses.
         if self.fortification != 0:
-            avgDamage = avgDamage - (
-                self.fortification * 
+            avgDamage -= (self.fortification * 
                 self.calcDamageFromDice(self.diceTupleToList(self.precisionDice)))
         
         return avgDamage
         
     def calcDamageCrit(self):
-        '''Wie calcDamageHit(), aber für kritische Treffer'''
+        """
+        As calcDamageHit(), but for critical hits
+
+        Returns
+        -------
+        avgDamage : float
+            Average damage per critical hit.
+        """
         
+        # Get dice list for critical hits
         diceList = self.listDiceCrit()
         
-        # Wenn die Anzahl der möglichen Würfelkombinationen zu hoch ist, die
-        # genaue Berechnung nicht durchführen.
-        # Wenn der minimale Schaden nicht kleiner als die Schadensreduzierung
-        # ist, kann man sich die genaue Berechnung ebenfalls sparen
+        # Two conditions need to be met for the program to create the complete
+        # dice array:
+        # The size of the array (= possible dice combinations) needs to be
+        # below 1e6 and the damage reduction must be greater than the minimum
+        # damage roll (every die rolls a one)
         minDamage = len(diceList) + self.damageCrit
         if minDamage >= self.damageReduction or np.prod(diceList) > 1e6:
             avgDamage = (self.calcDamageFromDice(diceList)
                          + self.damageCrit - self.damageReduction)
         
         else:
-            print("Würfel-Array erstellt.")
+            print("Created complete dice array.")
             diceArray = self.createDiceArray(diceList, self.damageCrit)
             avgDamage = np.sum(diceArray) / np.size(diceArray)
         
-        # Weiterrechnung mit dem durchschnittlichen Schaden pro Treffer
-        # Sonderklausel für Präzisionsschadenswürfel und die Bollwerk-Verzauberung
-        # Diese kann das Ergebnis mit Schadensreduzierung leicht verfälschen
+        # Extra condiction for fortification and precision damage dice
+        # This can slightly falsify the result with damage reduction
+        # Note: Fortification does not affect flat precision damage bonuses.
         if self.fortification != 0:
-            avgDamage = avgDamage - (
-                self.fortification * 
+            avgDamage -= (self.fortification * 
                 self.calcDamageFromDice(self.diceTupleToList(self.precisionDice)))
         
         return avgDamage
     
     def calcDamageFromDice(self, diceList):
-        '''Diese Funktion berechnet die durchschnittliche Summe eines Wurfes
-        der in diceList gegebenen Würfel nach folgender Formel:
-        avg(xdy) = x * (y+1)/2'''
+        """
+        This function calculates the average dice roll according to this formula:
+        avg(xdy) = x * (y+1)/2
+
+        Returns
+        -------
+        damage : float
+            Average roll of given dice list.
+        """
         
         damage = 0
         for d in diceList:
-            damage = damage + (d+1)/2
+            damage += (d+1)/2
         return damage
     
-    def createDiceArray(self, diceList, damageBonus):
-        '''Diese Funktion liefert ein Numpy-Array mit so vielen Dimensionen
-        wie es Schadenswürfel in diceList gibt, gefüllt mit dem Würfelergebnis,
-        das eintritt, wenn die Indizes den einzelnen Würfen entsprechen'''
+    def createDiceArray(self, diceList):
+        """
+        This function creates an array for a given list of dice with as many
+        dimensions as damage dice, where every dimension is as long als the
+        correspoding die has sides, which contains the result of every possible
+        roll combination with the array index indicating the single die result -1.
+        Damage bonuses and damage reduction are subsequently applied to this
+        array element-wise.
+        The array for 2d4+3 would look like this:
+            0   1   2   3
+        0   5   6   7   8
+        1   6   7   8   9
+        2   7   8   9   10
+        3   8   9   10  11
+
+        Returns
+        -------
+        diceArray : ndarray
+            Array filled with the sum of every possible dice roll combination.
+        """
         
         diceArray = np.zeros(tuple(diceList), dtype=int)
         
-        # Iterator aus Numpy, der über das mehrdimensionale Array iteriert
-        # und die Indizes zusammen addiert, zusammen mit einem Offset in Höhe
-        # der Anzahl von Würfeln, um den Index-Start bi 0 statt 1 auszugleichen
+        # nditer is a powerful iterator that iterates over every single array
+        # element and is able to access the indices of every element in order
+        # to calculate the dice results from them.
         it = np.nditer(diceArray, op_flags=['readwrite'], flags=['multi_index'])
-        damageMod = len(diceList) + self.damageBonus - self.damageReduction
+        
+        # len(diceList) is the offset between the sum of array indices and actual
+        # result, since arrays start indexing at zero and dice start at one.
+        damageMod = len(diceList) + self.damageHit - self.damageReduction
         for x in it:
             x[...] = max(np.sum(it.multi_index) + damageMod, 0)
     
         return diceArray
     
     def hitChance(self, bab):
-        '''Berechnung der Trefferchance für einen einzelnen Angriff. Die
-        Zusatzinformation bab ist nützlich für iterative Angriffe, Sekundärangriffe
-        mit natürlichen Waffen und Kampf mit zwei Waffen und hat generell einen
-        der folgenden Werte: 0, -2, -5, -7, -10, -12, -15, -17, -20'''
+        """
+        Hit chance calculation for a single attack with a single weapon. The
+        hit chance is appropriately modified by the given BAB penalty depending
+        on the attack.
+
+        Returns
+        -------
+        result : np.array
+            Hit chance for every AC in the given AC range.
+        """
         
         result = np.zeros(self.acArray.size,)
         for i in range(len(result)):
             ac = self.acArray[i]
             baseChance = (self.attackBonus + 21 + bab - ac) * 0.05
-            # Aufgrund von Auto-Hit und Auto-Miss bei 5% und 95% cappen.
+            
+            # Chance is capped at 5% and 9% due to auto-hit and auto-miss
             if baseChance > 0.95:
                 baseChance = 0.95
             elif baseChance < 0.05:
@@ -357,12 +478,21 @@ class Weapon :
         return result
         
     def critChance(self, bab):
-        '''Wie hitChance(), aber berechnet die Chance eines kritischen Treffers'''
+        """
+        As hitChance(bab), but for the chance of critical hits.
+
+        Returns
+        -------
+        result : np.array
+            Critical hit chance for every AC in the given AC range.
+        """
+        
         result = np.zeros(self.acArray.size,)
         maxThreat = (21-self.critRange) * 0.05
         for i in range(len(result)):
             ac = self.acArray[i]
-            # Zunächst Bedrohungschance (ähnliche Berechnung wie Trefferchance)
+            
+            # Threat chance is calculated similarly to hit chance
             baseChance = (self.attackBonus + 21 + bab - ac) * 0.05
             if baseChance > maxThreat:
                 baseChance = maxThreat
@@ -370,10 +500,11 @@ class Weapon :
                 baseChance = 0.05
             threatChance = baseChance * (1 - self.failChance)
             
-            # Dann die Chance eines bestätigten Treffers
-            # baseChance ist eine Hilfsvariable und kann überschrieben werden.
+            # Chance of confirmation
+            # baseChance is an auxiliary variable and can be overwritten safely
             baseChance = (self.attackBonus + self.critConfirmBonus + 21 + bab - ac) * 0.05
-            # Aufgrund von Auto-Hit und Auto-Miss bei 5% und 95% cappen.
+            # Chance is capped at 5% and 9% due to auto-hit and auto-miss
+            # Auto-hit, auto-miss and failure chance are applied to confirmation rolls
             if baseChance > 0.95:
                 baseChance = 0.95
             elif baseChance < 0.05:
@@ -382,6 +513,17 @@ class Weapon :
         return result
     
     def calcAttacks(self):
+        """
+        This function assembles an array with average damage values for every
+        element in self.baseAttacks, while the first columns contains the sum
+        of every row.
+
+        Returns
+        -------
+        attackResults : nd.array
+            Average damage of weapon, corresponding to target AC.
+
+        """
         attackResults = np.zeros((self.acArray.size, len(self.baseAttacks)+1))
         
         for b in range(len(self.baseAttacks)):
