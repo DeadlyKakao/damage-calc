@@ -22,10 +22,6 @@ class Weapon :
         """
         The constructor of the Weapon class takes a Pandas.DataFrame with all
         important weapon data and sorts it into object variables.
-        
-        dfWeapon: DataFrame containing weapon properties
-        minAC:    Minimum target AC for hit chance calculations
-        maxAC:    Maximum target AC for hit chance calculations
 
         Parameters
         ----------
