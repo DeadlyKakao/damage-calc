@@ -51,10 +51,11 @@ outputFileName = "output_test.xlsx"
 # (Numerical index or sheet name as string works)
 # excelSheet = "Salvador"
 excelSheet = "Irgwi-Tiergestalt"
+excelSheet = "Tannenquelle"
 
 # AC range for the calculation, given in minimum and maximum value (default 10 and 40)
-minAC = 5
-maxAC = 35
+minAC = 10
+maxAC = 40
 
 # Start of calculation execution
 sheet = sht.Sheet(iw.readInput(inputFileName, excelSheet), minAC, maxAC)
@@ -64,7 +65,7 @@ sheet = sht.Sheet(iw.readInput(inputFileName, excelSheet), minAC, maxAC)
 # sheet.listAttacks()
 # print(sheet.results)
 # print(sheet.diffResults)
-sheet.graphAbsolute(graphTitle="Irgwi Tiergestalt")
-sheet.graphDifference(graphTitle="Irgwi Tiergestalt (Differenz)")
+sheet.graphAbsolute(graphTitle="Trand Mildherz")
+sheet.graphDifference(graphTitle="Trand Mildherz (Differenz)")
 # sheet.outputData(outputFileName)
 # sheet.printData()
