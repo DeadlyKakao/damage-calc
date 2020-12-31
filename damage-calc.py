@@ -15,6 +15,7 @@ Instructions/Explanations/Versions
 - Representation of monster abilities like constrict, rend, rake etc.
 - Introduction of Damage Types
 - Introduction of Energy Resistance
+- Introduction of Spell Damage
 - Estimation of applicability of certain damage components and factoring percentage
     into overall damage calculation
 - GUI
