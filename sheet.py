@@ -67,12 +67,15 @@ class Sheet:
             self.attacks.append(newAttack)
             self.results = np.c_[self.results, newAttack.results[:,1]]
         
-        # Create a differenc earray
-        self.diffResults = self.results.copy()
-        for i in range(2, self.diffResults.shape[1]):
-            self.diffResults[:, i] -= self.diffResults[:, 1]
-        # Remove first row (= base case, no difference)
-        self.diffResults = np.delete(self.diffResults, 1, 1)
+        # Create a difference array if the input contains more than one attack
+        if len(self.attacks) > 1:
+            self.diffResults = self.results.copy()
+            for i in range(2, self.diffResults.shape[1]):
+                self.diffResults[:, i] -= self.diffResults[:, 1]
+            # Remove first row (= base case, no difference)
+            self.diffResults = np.delete(self.diffResults, 1, 1)
+        else:
+            self.diffResults = np.array(0)
             
     def listAttacks(self):
         """
@@ -245,7 +248,7 @@ class Sheet:
         # Return figure for possible further handling
         return figDifference
     
-    def outputData(self, outputFileName="Output.xlsx", outputSheet="Sheet1"):
+    def outputData(self, outputFileName="Output.xlsx", outputSheet="Sheet0"):
         """
         Write the results to Excel file.
 
@@ -254,7 +257,7 @@ class Sheet:
         outputFileName : str, optional
             Output file name. The default is "Output.xlsx".
         outputSheet : str, optional
-            Name of the sheet the output is written to. The default is "Sheet1".
+            Name of the sheet the output is written to. The default is "Sheet0".
 
         Returns
         -------
@@ -262,13 +265,31 @@ class Sheet:
 
         """
         
+        # Create list of attack names for output DataFrame
         cols = ["AC"]
         for i in range(0, self.results.shape[1]-1):
             cols.append(self.attacks[i].name)
             
+        # Write matrix of absolute values into DataFrame, use AC as index
         df = pd.DataFrame(data=self.results,
                           index=np.arange(self.acRange[0], self.acRange[1]+1),
                           columns=cols)
+        
+        # If sheet contains more than one attack: also output differences
+        if len(self.attacks) > 1:
+            # Add empty row to separate absolute block from difference block
+            df = df.append(pd.Series(), ignore_index=True)
+            
+            # Delete base case from cols list
+            del(cols[1])
+            
+            # Write matrix of difference values into DataFrame, use AC as index
+            dfDiff = pd.DataFrame(data=self.diffResults,
+                              index=np.arange(self.acRange[0], self.acRange[1]+1),
+                              columns=cols)
+            
+            # Concatenate both DataFrames and write to output file
+            df = pd.concat((df, dfDiff))
         
         df.to_excel(outputFileName, sheet_name=outputSheet, float_format="%.3f",
                     index=False)
@@ -301,7 +322,20 @@ class Sheet:
         None.
         
         """
+        cols = ["AC"]
+        for i in range(0, self.results.shape[1]-1):
+            cols.append(self.attacks[i].name)
+        print("Average Damage Values")
+        print(cols)
         print(self.results)
+        
+        # If sheet contains more than one attack: also output differences
+        if len(self.attacks) > 1:
+            print()
+            print("Damage Difference Values")
+            del(cols[1])
+            print(cols)
+            print(self.diffResults)
 
     def printDataComplete(self):
         """
