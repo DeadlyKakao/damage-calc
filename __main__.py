@@ -86,9 +86,9 @@ def main(args):
             elif a in ("-os", "--output-sheet"):
                 outputSheet = args[i+1]
             elif a in ("-mi", "--min-AC"):
-                minAC = args[i+1]
+                minAC = int(args[i+1])
             elif a in ("-ma", "--max-AC"):
-                maxAC = args[i+1]
+                maxAC = int(args[i+1])
             elif a in ("-c", "--console"):
                 flagOutputConsole = True
             elif a in ("-f", "--file-output"):
