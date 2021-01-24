@@ -47,11 +47,12 @@ def main(args):
     
     # Names of input and output files
     inputFileName = "input_examples.xlsx"
+    inputFileName = "input_test.xlsx"
     outputFileName = "output.xlsx"
     
     # Name of the sheet that the program should use
     # (Numerical index or sheet name as string works)
-    inputSheet = "Salvador"
+    inputSheet = "Irgwi-HA"
     outputSheet = "Sheet0"
     
     # AC range for the calculation, given in minimum and maximum value (default 10 and 40)
