@@ -46,13 +46,13 @@ def main(args):
     # Default settings (can be overridden by input arguments)
     
     # Names of input and output files
-    inputFileName = "input_examples.xlsx"
+    # inputFileName = "input_examples.xlsx"
     inputFileName = "input_test.xlsx"
     outputFileName = "output.xlsx"
     
     # Name of the sheet that the program should use
     # (Numerical index or sheet name as string works)
-    inputSheet = "Irgwi-HA"
+    inputSheet = "Aargan"
     outputSheet = "Sheet0"
     
     # AC range for the calculation, given in minimum and maximum value (default 10 and 40)
@@ -60,10 +60,10 @@ def main(args):
     maxAC = 40
     
     # Flags for desired output steps
-    flagOutputConsole = False
+    flagOutputConsole = True
     flagOutputFile = False
-    flagOutputGraphAbsolute = False
-    flagOutputGraphDifference = False
+    flagOutputGraphAbsolute = True
+    flagOutputGraphDifference = True
     
     # Graph titles and file names
     graphAbsoluteTitle = "Average Damage"
